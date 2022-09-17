@@ -23,5 +23,52 @@ p3_targets <- list(
              ggsave('src/assets/images/duration-chart/swarm_jd7d_2_western_compressed.png', 
                     p3_prop_western_2_swarm_plot_compressed,
                     width = 100, height = 10, dpi = 300, limitsize = FALSE),
+             format = "file" ),
+  
+  
+  ##### Plots for John #####
+  # National - variable - jd7d - 5%
+  tar_target(
+    p3_jd7d_5_swarm_plot_compressed,
+    event_swarm_plot_compressed(swarm_data = p2_prop_jd7d_5_swarm_compressed)
+  ),
+  tar_target(p3_jd7d_5_swarm_compressed_png,
+             ggsave('3_visualize/out/swarm_jd7d_5_compressed.png',
+                    p3_jd7d_5_swarm_plot_compressed,
+                    width = 100, height = 10, dpi = 300, limitsize = FALSE),
+             format = "file" ),
+  
+  # CRB - variable - jd7d - 5%
+  tar_target(
+    p3_jd7d_crb_5_swarm_plot_compressed,
+    event_swarm_plot_compressed(swarm_data = p2_prop_jd7d_crb_5_swarm_compressed)
+  ),
+  tar_target(p3_jd7d_crb_5_swarm_compressed_png,
+             ggsave('3_visualize/out/swarm_jd7d_crb_5_compressed.png',
+                    p3_jd7d_crb_5_swarm_plot_compressed,
+                    width = 100, height = 10, dpi = 300, limitsize = FALSE),
+             format = "file" ),
+  
+  # National - site - 5%
+  tar_target(
+    p3_site_5_swarm_plot_compressed,
+    event_swarm_plot_compressed(swarm_data = p2_prop_site_5_swarm_compressed)
+  ),
+  tar_target(p3_site_5_swarm_compressed_png,
+             ggsave('3_visualize/out/swarm_site_5_compressed.png',
+                    p3_site_5_swarm_plot_compressed,
+                    width = 100, height = 10, dpi = 300, limitsize = FALSE),
+             format = "file" ),
+  
+  # CRB - site - 5%
+  tar_target(
+    p3_site_crb_5_swarm_plot_compressed,
+    event_swarm_plot_compressed(swarm_data = p2_prop_site_crb_5_swarm_compressed)
+  ),
+  
+  tar_target(p3_site_crb_5_swarm_compressed_png,
+             ggsave('3_visualize/out/swarm_site_crb_5_compressed.png',
+                    p3_site_crb_5_swarm_plot_compressed,
+                    width = 100, height = 10, dpi = 300, limitsize = FALSE),
              format = "file" )
 )
