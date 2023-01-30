@@ -3,6 +3,55 @@ source('3_visualize/src/plot_inset.R')
 
 
 p3_targets <- list(
+  
+  ##### spatial data for map #####
+  # set proj
+  tar_target(p3_proj,
+             '+proj=aea +lat_0=23 +lon_0=-96 +lat_1=29.5 +lat_2=45.5 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs'
+  ),
+  
+  # obtain all US wide data 
+  tar_target(p3_states,
+             spData::us_states |> st_transform(p3_proj) |> ms_simplify(keep = 0.5)),
+  
+  # filter US for the 11 western states of interest 
+  tar_target(p3_states_western,
+             p3_states |> 
+               filter(NAME %in% c('Arizona', 'California', 'Colorado', 'Idaho', 'Montana', 'Nevada','New Mexico', 'Oregon', 'Utah','Washington', 'Wyoming'))),
+  
+  ##### Swarm plot for 1921-2020 #####
+  
+  # Generate plot where each drought event (unique drought at a single site)
+  # is a single tile with width equal to the duration of the drought event
+  tar_target(
+    p3_1921_2020_prop_western_2_swarm_plot_compressed,
+    event_swarm_plot_compressed(swarm_data = p2_1921_2020_prop_western_2_swarm_compressed)
+  ),
+  tar_target(p3_1921_2020_prop_western_2_swarm_compressed_png,
+             ggsave('3_visualize/out/swarm_1921_2020_jd7d_2_western_compressed.png', 
+                    p3_1921_2020_prop_western_2_swarm_plot_compressed,
+                    width = length(unique(lubridate::year(p2_1921_2020_prop_western_2_swarm_compressed$date))), height = 10, dpi = 300, limitsize = FALSE),
+             format = "file" ),
+  
+  ##### Map of 1921-2020 stations #####
+  
+  # transform to sf by filter metadata to the unique staID's for western states that have threshold =2 
+  tar_target(p3_1921_2020_prop_western_2_StaID_metadata_sf,
+             sf::st_as_sf(p2_1921_2020_metadata |> filter(StaID %in% unique(p2_1921_2020_prop_western_2$StaID)), coords = c("LNG_GAGE", "LAT_GAGE"), crs = 4269) |> 
+               st_transform(p3_proj)),
+  
+  # plotting inset with stations
+  tar_target(p3_1921_2020_inset_stations_map,
+             plot_inset(station_data = p3_1921_2020_prop_western_2_StaID_metadata_sf,
+                        station = TRUE,
+                        western_us_data = p3_states_western,
+                        us_data = p3_states,
+                        file_png = '3_visualize/out/western_states_1921_2020_stations_inset.png',
+                        width = 16, height = 9),
+             format = "file"),
+  
+  ##### Swarm plot for 1951-2020 #####
+  
   # Generate plot where each drought day (unique site day with drought)
   # is a single tile of width 1
   tar_target(
@@ -22,9 +71,9 @@ p3_targets <- list(
     event_swarm_plot_compressed(swarm_data = p2_prop_western_2_swarm_compressed)
   ),
   tar_target(p3_prop_western_2_swarm_compressed_png,
-             ggsave('src/assets/images/duration-chart/swarm_jd7d_2_western_compressed.png', 
+             ggsave('3_visualize/out/swarm_1951_2020_jd7d_2_western_compressed.png', 
                     p3_prop_western_2_swarm_plot_compressed,
-                    width = 100, height = 10, dpi = 300, limitsize = FALSE),
+                    width = length(unique(lubridate::year(p2_prop_western_2_swarm_compressed$date))), height = 10, dpi = 300, limitsize = FALSE),
              format = "file" ),
   
   # Generate vertical plot
@@ -38,42 +87,92 @@ p3_targets <- list(
                     width = 10, height = 100, dpi = 300, limitsize = FALSE),
              format = "file" ),
 
-# set proj
-  tar_target(p2_proj,
-             '+proj=aea +lat_0=23 +lon_0=-96 +lat_1=29.5 +lat_2=45.5 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs'
-             ),
-
-# transform to sf by filter metadataing to the unique staID's for western states that have threshold =2 
-  tar_target(p2_prop_western_2_StaID_metadata_sf,
+  ##### Map of 1951-2020 stations #####
+  
+  # transform to sf by filter metadata to the unique staID's for western states that have threshold =2 
+  tar_target(p3_prop_western_2_StaID_metadata_sf,
              sf::st_as_sf(p2_1951_2020_metadata |> filter(StaID %in% unique(p2_prop_western_2$StaID)), coords = c("LNG_GAGE", "LAT_GAGE"), crs = 4269) |> 
-               st_transform(p2_proj)),
+               st_transform(p3_proj)),
 
-# obtain all US wide data 
-  tar_target(p2_states,
-             spData::us_states |> st_transform(p2_proj) |> ms_simplify(keep = 0.5)),
-
-# filter US for the 11 western states of interest 
-tar_target(p2_states_western,
-           p2_states |> 
-             filter(NAME %in% c('Arizona', 'California', 'Colorado', 'Idaho', 'Montana', 'Nevada','New Mexico', 'Oregon', 'Utah','Washington', 'Wyoming'))),
-
-# plotting inset with stations
+  # plotting inset with stations
   tar_target(p3_inset_stations_map,
-           plot_inset(station_data = p2_prop_western_2_StaID_metadata_sf,
-                      station = TRUE,
-                      western_us_data = p2_states_western,
-                      us_data = p2_states,
-                      file_png = 'src/assets/images/western_states_stations_inset.png',
-                      width = 16, height = 9),
-           format = "file"),
+             plot_inset(station_data = p3_prop_western_2_StaID_metadata_sf,
+                        station = TRUE,
+                        western_us_data = p3_states_western,
+                        us_data = p3_states,
+                        file_png = 'src/assets/images/western_states_stations_inset.png',
+                        width = 16, height = 9),
+             format = "file"),
 
-# plotting inset without stations
-tar_target(p3_inset_map,
-           plot_inset(station_data = p2_prop_western_2_StaID_metadata_sf,
-                      station = FALSE,
-                      western_us_data = p2_states_western,
-                      us_data = p2_states,
-                      file_png = 'src/assets/images/western_states_inset.png',
-                      width = 16, height = 9),
-           format = "file")
+  # plotting inset without stations
+  tar_target(p3_inset_map,
+             plot_inset(station_data = p3_prop_western_2_StaID_metadata_sf,
+                        station = FALSE,
+                        western_us_data = p3_states_western,
+                        us_data = p3_states,
+                        file_png = 'src/assets/images/western_states_inset.png',
+                        width = 16, height = 9),
+             format = "file"),
+
+  ##### Swarm plot for 1981-2020 #####
+  
+  # Generate plot where each drought event (unique drought at a single site)
+  # is a single tile with width equal to the duration of the drought event
+  tar_target(
+    p3_1981_2020_prop_western_2_swarm_plot_compressed,
+    event_swarm_plot_compressed(swarm_data = p2_1981_2020_prop_western_2_swarm_compressed)
+  ),
+  tar_target(p3_1981_2020_prop_western_2_swarm_compressed_png,
+             ggsave('3_visualize/out/swarm_1981_2020_jd7d_2_western_compressed.png', 
+                    p3_1981_2020_prop_western_2_swarm_plot_compressed,
+                    width = length(unique(lubridate::year(p2_1981_2020_prop_western_2_swarm_compressed$date))), height = 49, dpi = 300, limitsize = FALSE),
+             format = "file" ),
+  
+  ##### Map of 1981-2020 stations #####
+  
+  # transform to sf by filter metadata to the unique staID's for western states that have threshold =2 
+  tar_target(p3_1981_2020_prop_western_2_StaID_metadata_sf,
+             sf::st_as_sf(p2_1981_2020_metadata |> filter(StaID %in% unique(p2_1981_2020_prop_western_2$StaID)), coords = c("LNG_GAGE", "LAT_GAGE"), crs = 4269) |> 
+               st_transform(p3_proj)),
+  
+  # plotting inset with stations
+  tar_target(p3_1981_2020_inset_stations_map,
+             plot_inset(station_data = p3_1981_2020_prop_western_2_StaID_metadata_sf,
+                        station = TRUE,
+                        western_us_data = p3_states_western,
+                        us_data = p3_states,
+                        file_png = '3_visualize/out/western_states_1981_2020_stations_inset.png',
+                        width = 16, height = 9),
+             format = "file"),
+  
+  ##### Swarm plot for 1981-2020 - CRB only #####
+  
+  # Generate plot where each drought event (unique drought at a single site)
+  # is a single tile with width equal to the duration of the drought event
+  tar_target(
+    p3_CRB_1981_2020_prop_western_2_swarm_plot_compressed,
+    event_swarm_plot_compressed(swarm_data = p2_CRB_1981_2020_prop_western_2_swarm_compressed)
+  ),
+  tar_target(p3_CRB_1981_2020_prop_western_2_swarm_compressed_png,
+             ggsave('3_visualize/out/swarm_CRB_1981_2020_jd7d_2_western_compressed.png', 
+                    p3_CRB_1981_2020_prop_western_2_swarm_plot_compressed,
+                    width = length(unique(lubridate::year(p2_CRB_1981_2020_prop_western_2_swarm_compressed$date))), height = 10, dpi = 300, limitsize = FALSE),
+             format = "file" ),
+  
+  ##### Map of 1981-2020 stations - CRB only #####
+  
+  # transform to sf by filter metadata to the unique staID's for western states that have threshold =2 
+  tar_target(p3_CRB_1981_2020_prop_western_2_StaID_metadata_sf,
+             sf::st_as_sf(p2_CRB_1981_2020_metadata |> filter(StaID %in% unique(p2_CRB_1981_2020_prop_western_2$StaID)), coords = c("LNG_GAGE", "LAT_GAGE"), crs = 4269) |> 
+               st_transform(p3_proj)),
+  
+  # plotting inset with stations
+  tar_target(p3_CRB_1981_2020_inset_stations_map,
+             plot_inset(station_data = p3_CRB_1981_2020_prop_western_2_StaID_metadata_sf,
+                        station = TRUE,
+                        western_us_data = p3_states_western,
+                        us_data = p3_states,
+                        file_png = '3_visualize/out/western_states_CRB_1981_2020_stations_inset.png',
+                        width = 16, height = 9),
+             format = "file")
 )
